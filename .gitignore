@@ -1,0 +1,19 @@
+# ignore all
+*
+
+# unignore all with extensions and directories
+!*.*
+
+!*/
+
+!Makefile
+
+# ignore bison generated files
+
+*.tab.c
+*.tab.h
+
+# ignore flex generated files
+
+*.yy.c
+*.yy.h
