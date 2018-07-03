@@ -10,9 +10,11 @@
 
 %%
 
+b              { return BINARY_MODE; }
+d              { return DECIMAL_MODE; }
 \+             { yylval.sign = 1; return SIGN; }
 \-             { yylval.sign = -1; return SIGN; }
-[0-1]          { yylval.bit = atoi(yytext); return BIT; }
+[0-9]          { yylval.num = atoi(yytext);  return NUM; }
 [\t \n]        { return LINE; }
 .
 

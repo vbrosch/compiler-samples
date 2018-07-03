@@ -1,13 +1,20 @@
 # binary converter
 
-A simple grammar implemented in bison and flex that returns the integer representation of a binary number.
+A simple grammar implemented in bison and flex that returns the integer representation of a binary number and vice versa.
 
+**binary to decimal conversion (prefix b)**
 e.g.
-* 101010
-* -1110
-* +1111
+* b101010
+* b-1110 (it is also possible to return a negative number)
+* b+1111
 
-Please install bison, flex and gcc *before* execution of make!
+**decimal to binary conversion (prefix d)**
+e.g.
+* d20
+* d-10
+* d+5
+
+Please install bison, flex and gcc **before** execution of make!
 
 ## Usage
 ```
