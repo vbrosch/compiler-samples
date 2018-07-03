@@ -11,8 +11,6 @@ e.g.
 **decimal to binary conversion (prefix d)**
 e.g.
 * d20
-* d-10
-* d+5
 
 Please install bison, flex and gcc **before** execution of make!
 
