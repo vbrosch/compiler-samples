@@ -5,6 +5,8 @@
   #include <stdio.h>
   #include <string.h>
 
+  #define YYDEBUG 1
+
   #define MAX_DEPTH 8192
   #define STORE_SIZE 1024
   #define ACCESS_TYPE_VALUE 0
@@ -100,6 +102,7 @@
 %token OP_RETURN
 %token OP_FRETURN
 %token OP_ASSIGNMENT
+%token OP_PRINT
 %token OP_GOTO
 %token OP_NOOP
 %token OP_NOT
@@ -140,10 +143,11 @@ statement:            assignment
                       | return
                       | freturn
                       | get_result
+                      | print
                       ;
 
 assignment:           variable_reference space OP_ASSIGNMENT space binary_assignment  { store[$1.adr] = $5; inc_pc(); }
-                      | variable_reference space OP_ASSIGNMENT space value_assignment { store[$1.adr] = ($5.is_address) ? $5.adr : store[$5.adr]; inc_pc(); }
+| variable_reference space OP_ASSIGNMENT space value_assignment { store[$1.adr] = ($5.is_address) ? $5.adr : store[$5.adr]; inc_pc(); }
                       ;
 
 value_assignment:     variable_reference  { $$ = $1; }
@@ -175,7 +179,7 @@ variable_reference:   var_reference                 { $$ = $1; }
 
 var_reference:        LITERAL_NUMBER                { $$.adr = adr($1); }
                       | CHAR_STAR LITERAL_NUMBER    { $$.adr = store[adr($2)]; }
-                      | CHAR_AND LITERAL_NUMBER     { $$.adr = adr($2); $$.is_address = 1; }
+                      | CHAR_AND LITERAL_NUMBER     { $$.adr = adr($2); $$.is_address = 1;  }
                       ;
 
 //array_reference:      var_reference CHAR_SQUARE_BRACKET_LEFT var_reference CHAR_SQUARE_BRACKET_RIGHT
@@ -204,6 +208,8 @@ freturn:              OP_FRETURN WHITESPACE LITERAL_NUMBER  { f_return($3); }
 
 get_result:           OP_GETRESULT WHITESPACE LITERAL_NUMBER { get_result($3); }
                       ;
+
+print:                OP_PRINT WHITESPACE LITERAL_NUMBER { printf("print: store[%d] = %d\n", adr($3), store[adr($3)]); inc_pc(); }
 
 space:                WHITESPACE
                       | ;
@@ -282,9 +288,13 @@ void refparam(int i){
 void valparam(int i){
   param = align(param, alignment(i));
 
-  for(int j = 0; i < size(i); i++){
+  /*for(int j = 0; i < size(i); i++){
     store[param+j] = store[adr(i) + j];
-  }
+  }*/
+
+  int x = store[param] = store[adr(i)];
+
+  printf("-- set valparam at position %d to %d\n", param, store[param]);
 
   param += size(i);
   inc_pc();
@@ -294,6 +304,7 @@ void f_return(int i){
   newframe = display[depth];
 
   if(i >= 0){
+    printf("--f_return will store return value %d at: %d \n", store[adr(i)], newframe);
     store[newframe] = store[adr(i)];
   }
 
@@ -305,14 +316,14 @@ void f_return(int i){
 }
 
 void get_result(int i){
-  store[adr(i)] = newframe;
+  printf("-- get_result newframe is: %d\n", newframe);
+  store[adr(i)] = store[newframe];
   inc_pc();
 }
 
 // operators
 
-int binary_operator(char * op, int adr1, int adr2){
-  printf("binary op!");
+int binary_operator(char* op, int adr1, int adr2){
   switch(op[0]){
     case '+':
       return store[adr1] + store[adr2];
@@ -342,7 +353,7 @@ void destroy_machine(){
   free(store);
 }
 
-char** read_lines(char* filename){
+char** read_lines(char* filename, int* statement_count){
   FILE * fp;
   char *source_str;
   size_t source_size, program_size;
@@ -374,6 +385,7 @@ char** read_lines(char* filename){
   while(ptr != NULL) {
     dest_string[index] = ptr;
     index++;
+    *statement_count = index;
    	ptr = strtok(NULL, delimiter);
   }
 
@@ -387,31 +399,53 @@ void init_stack(int n){
 
 int main(int argc, char** argv){
   init_machine();
-  code_store = read_lines("program.3ac");
+
+  int statement_count = 0;
+  code_store = read_lines("program.3ac", &statement_count);
 
   var_const_tab = (var_const_t*) malloc(sizeof(var_const_t) * 16);
   var_const_t tab0 = {0, 0, "a", 0, 16, 4, 0, 4};
   var_const_t tab1 = {1, 0, "b", 0, 20, 4, 0, 4};
   var_const_t tab2 = {2, 0, "c", 0, 24, 4, 0, 4};
+  var_const_t tab3 = {3, 0, "p2_a", 2, 16, 4, 0, 4};
+  var_const_t tab4 = {4, 0, "p2_b", 2, 20, 4, 0, 4};
+  var_const_t tab5 = {5, 0, "p2_c", 2, 24, 4, 0, 4};
+  var_const_t tab6 = {6, 0, "p1_a", 1, 16, 4, 0, 4};
+  var_const_t tab7 = {7, 0, "p1_b", 1, 20, 4, 0, 4};
+  var_const_t tab8 = {8, 0, "p1_c", 1, 24, 4, 0, 4};
 
   var_const_tab[0] = tab0;
   var_const_tab[1] = tab1;
   var_const_tab[2] = tab2;
+  var_const_tab[3] = tab3;
+  var_const_tab[4] = tab4;
+  var_const_tab[5] = tab5;
+  var_const_tab[6] = tab6;
+  var_const_tab[7] = tab7;
+  var_const_tab[8] = tab8;
 
   store[tab0.offset] = 10;
   store[tab1.offset] = 20;
 
   func_tab = (func_tab_t*) malloc(sizeof(func_tab_t) * 16);
+  func_tab_t func0 = {0, "sum", 2, 0, 24};
+  func_tab_t func1 = {0, "prod", 1, 5, 24};
+
+  func_tab[0] = func0;
+  func_tab[1] = func1;
+
+  pc = 12;
 
   char* current_statement = code_store[pc];
-  while(current_statement != NULL){
-    printf("Interpretation of: %s\n", current_statement);
+  while(pc < statement_count){
+    printf("%s, pc = %d\n", current_statement, pc);
     yy_scan_string(current_statement);
     yyparse();
+    printf("pc = %d, statement_count = %d \n", pc, statement_count);
     current_statement = code_store[pc];
   }
 
-  //printf("Storage of c: %d\n", store[tab2.offset]);
+  printf("Finished Interpretation. Value of c = %d\n", store[tab2.offset]);
 
   destroy_machine();
 

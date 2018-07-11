@@ -11,6 +11,7 @@
 %%
 
 \               { return WHITESPACE; }
+print           { return OP_PRINT; }
 call            { return OP_CALL; }
 refparam        { return OP_REFPARAM; }
 valparam        { return OP_VALPARAM; }
@@ -18,14 +19,14 @@ getresult       { return OP_GETRESULT; }
 return          { return OP_RETURN; }
 freturn         { return OP_FRETURN; }
 \:\=            { return OP_ASSIGNMENT; }
-\+              { return CHAR_ADD; }
-\-              { return CHAR_MINUS; }
-\*              { return CHAR_STAR; }
-\/              { return CHAR_DIVIDE; }
-\+\+            { return CHAR_INCREMENT; }
-\-\-            { return CHAR_DECREMENT; }
-\&&             { return CHAR_LOGICAL_AND; }
-\|\|            { return CHAR_LOGICAL_OR; }
+\+              { yylval.string = yytext; return CHAR_ADD; }
+\-              { yylval.string = yytext; return CHAR_MINUS; }
+\*              { yylval.string = yytext; return CHAR_STAR; }
+\/              { yylval.string = yytext; return CHAR_DIVIDE; }
+\+\+            { yylval.string = yytext; return CHAR_INCREMENT; }
+\-\-            { yylval.string = yytext; return CHAR_DECREMENT; }
+\&&             { yylval.string = yytext; return CHAR_LOGICAL_AND; }
+\|\|            { yylval.string = yytext; return CHAR_LOGICAL_OR; }
 \&              { return CHAR_AND; }
 \<              { return COP_LE; }
 \>              { return COP_GR; }

@@ -1,1 +1,18 @@
-2 := 0 + 1
+print 3
+print 4
+5 := 3 + 4
+print 5
+freturn 5
+valparam 6
+valparam 6
+call 0
+getresult 6
+8 := 6 * 7
+print 6
+freturn 6
+print 0
+valparam 0
+valparam 1
+call 1
+getresult 2
+noop
